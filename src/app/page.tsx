@@ -400,28 +400,35 @@ export default function GitGravityStory() {
   // Slide 0 has no physics overlay (intro), slides 1, 2, 3, 4 do.
   const isPhysicsActive = physicsActive && currentSlide > 0 && appState === "story";
 
-  // Slide transition variants mapped to scroll direction with 3D rotation and perspective scaling
+  // Slide transition variants mapped to scroll direction with spring physics and 3D rotation
   const slideVariants = {
     enter: (dir: number) => ({
       y: dir > 0 ? "100vh" : "-100vh",
-      rotateX: dir > 0 ? 35 : -35,
-      rotateY: dir > 0 ? 5 : -5,
-      scale: 0.85,
+      rotateX: dir > 0 ? 45 : -45,
+      scale: 0.78,
       opacity: 0,
     }),
     center: {
       y: 0,
       rotateX: 0,
-      rotateY: 0,
       scale: 1,
       opacity: 1,
+      transition: {
+        type: "spring" as const,
+        stiffness: 90,
+        damping: 18,
+        mass: 0.85
+      }
     },
     exit: (dir: number) => ({
       y: dir > 0 ? "-100vh" : "100vh",
-      rotateX: dir > 0 ? -35 : 35,
-      rotateY: dir > 0 ? -5 : 5,
-      scale: 0.85,
+      rotateX: dir > 0 ? -45 : 45,
+      scale: 0.78,
       opacity: 0,
+      transition: {
+        duration: 0.65,
+        ease: [0.16, 1, 0.3, 1] as any
+      }
     })
   };
 
@@ -766,7 +773,7 @@ export default function GitGravityStory() {
 
             {/* Stories AnimatePresence Viewport (Full Screen Stack) */}
             <div className="flex-1 relative w-full h-full flex flex-col justify-center items-center overflow-hidden z-[20]" style={{ perspective: "1500px", transformStyle: "preserve-3d" }}>
-              <AnimatePresence mode="wait" custom={scrollDirection}>
+              <AnimatePresence custom={scrollDirection}>
                 <motion.div
                   key={currentSlide}
                   custom={scrollDirection}
@@ -774,7 +781,6 @@ export default function GitGravityStory() {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                   className="absolute inset-0 p-8 flex flex-col justify-between max-w-6xl mx-auto mt-36 mb-12 w-full"
                   style={{ transformStyle: "preserve-3d" }}
                 >
