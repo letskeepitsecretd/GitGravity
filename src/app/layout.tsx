@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GitGravity // Your 2025 Code Wrapped",
+  title: `GitGravity // Your ${new Date().getFullYear()} Code Wrapped`,
   description: "Experience your GitHub stats in an interactive zero-gravity physics space. Powered by Next.js, Framer Motion & Matter.js.",
 };
 

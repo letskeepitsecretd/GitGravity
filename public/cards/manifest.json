@@ -1,0 +1,37 @@
+[
+  {
+    "username": "kl",
+    "era": "ERA_CLASSIC",
+    "pattern": "GRID",
+    "accent": "#ff4632",
+    "timestamp": "2026-06-12T20:03:44.425Z"
+  },
+  {
+    "username": "letskeepitsecretd",
+    "era": "ERA_FLOATING",
+    "pattern": "STRIPES",
+    "accent": "#ff82a8",
+    "timestamp": "2026-06-12T19:59:53.776Z"
+  },
+  {
+    "username": "torvalds",
+    "era": "ERA_SPLIT",
+    "pattern": "CHECKER",
+    "accent": "#ff4632",
+    "timestamp": "2026-06-12T18:03:11.322Z"
+  },
+  {
+    "username": "gaearon",
+    "era": "ERA_BLOCKS",
+    "pattern": "GRID",
+    "accent": "#7a68fa",
+    "timestamp": "2026-06-12T17:03:11.322Z"
+  },
+  {
+    "username": "devkumarraikwar",
+    "era": "ERA_ARCHES",
+    "pattern": "HYPNOTIC",
+    "accent": "#1ed760",
+    "timestamp": "2026-06-12T16:03:11.322Z"
+  }
+]

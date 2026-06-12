@@ -1,0 +1,118 @@
+import { toPng } from 'html-to-image';
+
+export interface GitHubStats {
+  username: string;
+  totalCommits: number;
+  longestStreak: number;
+  totalStars: number;
+  totalPRs: number;
+  topLanguages: Array<{ name: string; percent: number }>;
+  avatarUrl?: string;
+}
+
+export interface CardDNA {
+  era: string;
+  pattern: string;
+  accent: string;
+  typography: string;
+  isLightMode: boolean;
+  year: number;
+}
+
+// 7 Master Eras
+export const ERAS = ['ERA_SPLIT', 'ERA_BLOCKS', 'ERA_ARCHES', 'ERA_CLASSIC', 'ERA_OVERLAP', 'ERA_SPIRAL', 'ERA_FLOATING'];
+
+// 9 Background Patterns
+export const PATTERNS = ['CHECKER', 'STRIPES', 'DOTS', 'WAVES', 'ZIGZAG', 'GRID', 'HYPNOTIC', 'STARBURST', 'SOLID'];
+
+// 12 Hyper-Vibrant Accents
+export const ACCENTS = ['#1ed760', '#ff4632', '#7a68fa', '#e8f038', '#ff82a8', '#000000', '#0ea5e9', '#f97316', '#14b8a6', '#ffffff', '#ec4899', '#84cc16'];
+
+// 5 Typography Styles
+export const TYPOGRAPHY = ['font-sans', 'font-mono', 'font-serif', 'font-black', 'font-bold'];
+
+export function generateCardDNA(stats: GitHubStats): CardDNA {
+  const hash = stats.username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const currentYear = new Date().getFullYear();
+  
+  const commitFactor = Math.floor(stats.totalCommits / 50);
+  const langSeed = stats.topLanguages.length > 0 ? stats.topLanguages[0].name.charCodeAt(0) : 42;
+
+  const eraIdx = (hash + new Date().getMonth()) % ERAS.length;
+  const patternIdx = (hash + commitFactor) % PATTERNS.length;
+  const accentIdx = (hash + langSeed) % ACCENTS.length;
+  const typoIdx = (hash + currentYear) % TYPOGRAPHY.length;
+  
+  const isLightMode = (hash % 2 === 0);
+  const finalAccent = (ACCENTS[accentIdx] === '#000000' && !isLightMode) ? '#1ed760' : ACCENTS[accentIdx];
+
+  return {
+    era: ERAS[eraIdx],
+    pattern: PATTERNS[patternIdx],
+    accent: finalAccent,
+    typography: TYPOGRAPHY[typoIdx],
+    isLightMode,
+    year: currentYear
+  };
+}
+
+export const captureCardElement = async (
+  node: HTMLElement | null, 
+  username: string, 
+  metadata?: { era?: string; pattern?: string; accent?: string },
+  delayMs: number = 2500
+) => {
+  if (!node) return;
+
+  try {
+    // 1. Wait for fonts and imagery assets to stabilize completely
+    if (typeof document !== 'undefined' && document.fonts) {
+      try {
+        await document.fonts.ready;
+      } catch (e) {
+        console.warn("Fonts ready promise failed:", e);
+      }
+    }
+    
+    // Wait for all images inside the element to load
+    const imgs = Array.from(node.getElementsByTagName('img'));
+    await Promise.all(imgs.map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      });
+    }));
+
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs)); // Wait for full layout paint
+    }
+
+    // 2. Capture configuration with CORS and performance safety flags
+    const dataUrl = await toPng(node, {
+      cacheBust: true,
+      skipFonts: true, // Skip fonts to prevent browser hanging issues
+      style: {
+        transform: 'scale(1)', // Ensure no 3D parallax distortion during snapshot
+      },
+    });
+
+    // 3. Post to backend to save the clean file
+    await fetch('/api/admin/save-card', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        username, 
+        image: dataUrl,
+        era: metadata?.era,
+        pattern: metadata?.pattern,
+        accent: metadata?.accent
+      }),
+    });
+
+    console.log('Card rendered and saved successfully.');
+    return dataUrl;
+  } catch (error) {
+    console.error('Snapshot generation crashed:', error);
+  }
+};
