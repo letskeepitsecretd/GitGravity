@@ -4,9 +4,12 @@ export async function POST(req: Request) {
   try {
     const { passphrase } = await req.json();
     
-    if (passphrase === process.env.ROOT_PASSPHRASE) {
+    const rootPassphrase = process.env.ROOT_PASSPHRASE;
+    const adminSecret = process.env.ADMIN_COOKIE_SECRET;
+    
+    if (rootPassphrase && adminSecret && passphrase === rootPassphrase) {
       const response = NextResponse.json({ success: true });
-      response.cookies.set('gg_root_access', process.env.ADMIN_COOKIE_SECRET!, {
+      response.cookies.set('gg_root_access', adminSecret, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
