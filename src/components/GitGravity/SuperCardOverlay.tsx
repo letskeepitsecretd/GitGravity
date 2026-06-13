@@ -157,6 +157,28 @@ export default function SuperCardOverlay({ stats, shareTarget, onClose, triggerS
     return false;
   };
 
+  const uploadToCatbox = async (blob: Blob): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('reqtype', 'fileupload');
+      formData.append('fileToUpload', blob, `gitgravity-${stats.username}.png`);
+
+      const res = await fetch('https://catbox.moe/user/api.php', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) return null;
+      const text = await res.text();
+      // Catbox returns the direct URL as plain text
+      if (text && text.startsWith('https://')) return text.trim();
+      return null;
+    } catch (e) {
+      console.warn("Catbox upload failed:", e);
+      return null;
+    }
+  };
+
   const executeShareAction = async () => {
     triggerSound("tap")
     if (!shareTarget) return
@@ -166,34 +188,57 @@ export default function SuperCardOverlay({ stats, shareTarget, onClose, triggerS
     if (sharedNatively) return;
 
     // Desktop/Fallback sharing flow:
-    // 1. Trigger high-quality card download to local machine
+    showToast("Uploading card for sharing...");
+
+    // 1. Capture the card as a blob for upload
+    let catboxUrl: string | null = null;
+    const el = captureRef.current;
+    if (el) {
+      try {
+        const dataUrl = await captureCardElement(el, stats.username, {
+          era: cardDNA.era,
+          pattern: cardDNA.pattern,
+          accent: cardDNA.accent
+        }, 500);
+
+        if (dataUrl) {
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          catboxUrl = await uploadToCatbox(blob);
+        }
+      } catch (e) {
+        console.warn("Card capture/upload failed:", e);
+      }
+    }
+
+    // 2. Also trigger local download
     downloadCard();
 
-    // 2. Generate share link pointing to dynamic card display page
+    // 3. Generate share link with persistent image URL
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://gitgravity.vercel.app';
-    const shareUrl = `${origin}/card/${stats.username}`;
+    const shareUrl = catboxUrl
+      ? `${origin}/card/${stats.username}?img=${encodeURIComponent(catboxUrl)}`
+      : `${origin}/card/${stats.username}`;
     const shareTextWithUrl = `${shareText}\n\nView Card: ${shareUrl}`;
     
-    // 3. Copy the text automatically to clipboard
+    // 4. Copy the text automatically to clipboard
     try {
       await navigator.clipboard.writeText(shareTextWithUrl);
-      showToast("Card downloaded & text copied! Paste it in your post.");
+      if (shareTarget === 'instagram') {
+        showToast(catboxUrl ? "Card downloaded & link copied! Paste in your Instagram Story/Bio ✨" : "Card downloaded! Upload it to your Instagram Story");
+      } else {
+        showToast(catboxUrl ? "Card uploaded & link copied!" : "Card downloaded & text copied!");
+      }
     } catch (e) {
       console.warn("Clipboard copy failed:", e);
     }
 
-    // 4. Open desktop intent links
+    // 5. Open desktop intent links
     let url = ''
     if (shareTarget === 'whatsapp') url = `https://wa.me/?text=${encodeURIComponent(shareTextWithUrl)}`
     if (shareTarget === 'twitter') url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`
     if (shareTarget === 'linkedin') url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
-    if (shareTarget === 'instagram') {
-      // Instagram sharing logic handled by downloadCard(), open web portal for convenience
-      setTimeout(() => {
-        window.open('https://www.instagram.com', '_blank', 'noopener,noreferrer')
-      }, 600);
-      return
-    }
+    if (shareTarget === 'instagram') url = 'https://www.instagram.com'
     
     if (url) {
       setTimeout(() => {

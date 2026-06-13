@@ -3,12 +3,14 @@ import Link from 'next/link';
 
 interface Props {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ img?: string }>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { username } = await params;
+  const { img } = await searchParams;
   const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://gitgravity.vercel.app';
-  const imageUrl = `${origin}/api/admin/card-image?username=${username}`;
+  const imageUrl = img ? img : `${origin}/api/admin/card-image?username=${username}`;
 
   return {
     title: `@${username}'s GitGravity Card`,
@@ -35,9 +37,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CardPage({ params }: Props) {
+export default async function CardPage({ params, searchParams }: Props) {
   const { username } = await params;
-  const imageUrl = `/api/admin/card-image?username=${username}`;
+  const { img } = await searchParams;
+  const imageUrl = img ? img : `/api/admin/card-image?username=${username}`;
 
   return (
     <div className="bg-[#050508] min-h-screen text-white flex flex-col items-center justify-center p-6 font-mono">
