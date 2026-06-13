@@ -108,18 +108,55 @@ export default function GeneratedCard({ dna, stats, animatedCommits, animatedStr
         </>
       )}
 
-      {/* 2. ERA_BLOCKS (Staggered Typography) */}
+      {/* 2. ERA_BLOCKS (Staggered Typography + Brutalist Grid) */}
       {dna.era === 'ERA_BLOCKS' && (
-        <div className="relative w-full h-full p-8 flex flex-col justify-center overflow-hidden">
-          <div className="absolute bottom-0 right-0 w-[60%] h-[40%] opacity-80" style={getPattern(dna.pattern)} />
-          <svg className="absolute top-10 left-0 w-[150%] h-full z-0 pointer-events-none opacity-40" viewBox="0 0 200 200"><path d="M 0 150 Q 100 100 200 180" fill="transparent" stroke={textMain} strokeWidth="0.5" /></svg>
-          <div className="relative z-10 space-y-4">
-            <h4 className="text-xs uppercase font-bold mb-6 tracking-widest">My Top Vector</h4>
-            <div className="flex flex-col items-start space-y-2">
-              <span className={`text-5xl font-black px-3 py-1 -rotate-2 ${dna.typography}`} style={{ backgroundColor: dna.accent, color: '#000' }}>{animatedCommits}</span>
-              <span className={`text-3xl font-black px-2 py-1 ml-4 rotate-1 ${dna.typography}`} style={{ backgroundColor: textMain, color: bgMain }}>COMMITS</span>
-              <span className={`text-2xl font-black px-2 py-1 ml-1 -rotate-1 ${dna.typography}`} style={{ backgroundColor: textMain, color: bgMain }}>{primaryLang}</span>
-              <span className={`text-xl font-black px-2 py-1 ml-6 rotate-2 ${dna.typography}`} style={{ backgroundColor: textMain, color: bgMain }}>{animatedStreak} D STREAK</span>
+        <div className="relative w-full h-full p-8 flex flex-col justify-between overflow-hidden">
+          {/* Background pattern and curves */}
+          <div className="absolute bottom-0 right-0 w-[60%] h-[40%] opacity-85" style={getPattern(dna.pattern)} />
+          <svg className="absolute top-10 left-0 w-[150%] h-full z-0 pointer-events-none opacity-45" viewBox="0 0 200 200">
+            <path d="M 0 150 Q 100 100 200 180" fill="transparent" stroke={textMain} strokeWidth="0.5" />
+          </svg>
+
+          {/* Top section: Brutalist Avatar and Vector header */}
+          <div className="relative z-10 flex justify-between items-start mt-8">
+            <div className="space-y-1">
+              <h4 className="text-[9px] uppercase font-bold tracking-widest opacity-60">SYSTEM VECTOR</h4>
+              <h3 className={`text-lg font-black uppercase italic ${dna.typography}`} style={{ color: dna.accent }}>
+                {primaryLang} Core
+              </h3>
+            </div>
+            {/* Heavy-bordered Brutalist Avatar */}
+            <div className="w-[85px] aspect-square border-4 bg-zinc-900 shadow-[4px_4px_0px_#000] dark:shadow-[4px_4px_0px_#fff]" style={{ borderColor: textMain }}>
+              {renderAvatar(true)}
+            </div>
+          </div>
+
+          {/* Middle section: Big typography blocks */}
+          <div className="relative z-10 my-auto flex flex-col items-start space-y-2.5">
+            <span className={`text-6xl font-black px-4 py-1.5 -rotate-2 ${dna.typography} shadow-md`} style={{ backgroundColor: dna.accent, color: '#000' }}>
+              {animatedCommits.toLocaleString()}
+            </span>
+            <span className={`text-2xl font-black px-2.5 py-1 ml-4 rotate-1 ${dna.typography}`} style={{ backgroundColor: textMain, color: bgMain }}>
+              COMMITS
+            </span>
+            <span className={`text-xl font-black px-2 py-1 ml-1 -rotate-1 ${dna.typography}`} style={{ backgroundColor: textMain, color: bgMain }}>
+              {animatedStreak}D STREAK
+            </span>
+          </div>
+
+          {/* Bottom section: Dynamic GitHub details to fill emptiness */}
+          <div className="relative z-10 grid grid-cols-2 gap-4 pt-4 border-t-2" style={{ borderColor: textMain }}>
+            <div>
+              <p className="text-[9px] uppercase font-bold opacity-60">Galaxy Mass</p>
+              <p className={`text-sm font-black ${dna.typography}`}>
+                ★ {animatedStars} Stars
+              </p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase font-bold opacity-60">Orbit Pulse</p>
+              <p className={`text-sm font-black ${dna.typography}`}>
+                ⇄ {stats.totalPRs || 0} Pulls
+              </p>
             </div>
           </div>
         </div>

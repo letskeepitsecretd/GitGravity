@@ -103,3 +103,42 @@ export async function saveCardToDb(newCard: Omit<CardMetadata, 'timestamp'>): Pr
     return false;
   }
 }
+
+/**
+ * Safely removes a card from Vercel KV or local disk fallback by username
+ */
+export async function deleteCardFromDb(username: string): Promise<boolean> {
+  const currentCards = await getCardsFromDb();
+  const filteredCards = currentCards.filter(
+    card => card.username.toLowerCase() !== username.toLowerCase()
+  );
+
+  if (isCloudConfigured()) {
+    try {
+      const response = await fetch(`${KV_URL}/set/gitgravity:cards`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${KV_TOKEN}`,
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify(filteredCards),
+      });
+
+      if (!response.ok) throw new Error(`KV Delete/Write Error: ${response.statusText}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Cloud DB delete pipeline stalled:', error);
+      return false;
+    }
+  }
+
+  // Local Development Fallback Write Layer
+  try {
+    await fs.mkdir(path.dirname(LOCAL_STORAGE_PATH), { recursive: true });
+    await fs.writeFile(LOCAL_STORAGE_PATH, JSON.stringify(filteredCards, null, 2), 'utf-8');
+    return true;
+  } catch (error) {
+    console.error('❌ Local file system fallback delete execution crashed:', error);
+    return false;
+  }
+}

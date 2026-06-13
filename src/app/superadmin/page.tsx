@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Activity, HardDrive, Database, Download, RefreshCw, LayoutGrid, Search } from 'lucide-react';
+import { Activity, HardDrive, Database, Download, RefreshCw, LayoutGrid, Search, Trash2 } from 'lucide-react';
 import JSZip from 'jszip';
 
 export default function Dashboard() {
@@ -10,11 +10,39 @@ export default function Dashboard() {
   const [exportStatus, setExportStatus] = useState('');
 
   const [renderId, setRenderId] = useState('');
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
   const fetchData = () => fetch('/api/admin/metrics').then(r => r.json()).then(setSys);
   useEffect(() => { 
     fetchData(); 
     setRenderId(Math.random().toString(36).substring(7));
   }, []);
+
+  const handleDeleteCard = async (username: string) => {
+    if (!confirm(`Are you sure you want to permanently delete the card for @${username}?`)) {
+      return;
+    }
+
+    setIsDeleting(username);
+    try {
+      const res = await fetch('/api/admin/delete-card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to delete card');
+      }
+
+      fetchData(); // Refresh list
+    } catch (err: any) {
+      alert(`Error deleting card: ${err.message || err}`);
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
   const handleExport = async () => {
     if (!sys?.cards || isExporting) return;
@@ -191,8 +219,8 @@ export default function Dashboard() {
                       <span className="text-[7px] text-green-400 font-mono tracking-widest uppercase">SYNCED</span>
                     </div>
  
-                    {/* Floating hover download overlay */}
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Floating hover actions overlay */}
+                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2 z-30">
                       <a 
                         href={`/api/admin/card-image?username=${c.username}&t=${c.timestamp}&r=${renderId}`} 
                         download={`${c.username}_gitgravity.png`}
@@ -202,6 +230,21 @@ export default function Dashboard() {
                       >
                         <Download size={12} />
                       </a>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCard(c.username);
+                        }}
+                        disabled={isDeleting !== null}
+                        className="p-1.5 bg-black/90 border border-zinc-800 hover:border-red-500 hover:text-red-500 text-zinc-400 rounded-md transition-colors block cursor-pointer disabled:opacity-50"
+                        title="Delete Card"
+                      >
+                        {isDeleting === c.username ? (
+                          <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Trash2 size={12} />
+                        )}
+                      </button>
                     </div>
                   </div>
 
