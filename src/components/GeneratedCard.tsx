@@ -164,18 +164,47 @@ export default function GeneratedCard({ dna, stats, animatedCommits, animatedStr
 
       {/* 3. ERA_ARCHES (Concentric Minimal) */}
       {dna.era === 'ERA_ARCHES' && (
-        <div className="relative w-full h-full p-6 flex flex-col justify-between overflow-hidden">
+        <div className="relative w-full h-full p-8 flex flex-col justify-between overflow-hidden">
+          {/* Arches Background */}
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[180%] aspect-square rounded-full border-[1px] opacity-30 pointer-events-none" style={{ borderColor: dna.accent }}>
             <div className="absolute inset-[10%] rounded-full border-[1px] border-inherit" />
             <div className="absolute inset-[20%] rounded-full border-[1px] border-inherit" />
             <div className="absolute inset-[30%] rounded-full border-[1px] border-inherit" />
           </div>
-          <div className="relative z-10 w-full flex flex-col items-center mt-12">
-            <div className="w-[45%] mb-8 border-[4px] shadow-2xl" style={{ borderColor: dna.accent, borderRadius: '50%' }}>{renderAvatar(false)}</div>
-            <div className={`bg-white/90 text-black px-6 py-2 rounded-full font-black text-xl text-center shadow-xl w-[90%] truncate border border-black/10 ${dna.typography}`}>{stats.name || `@${stats.username}`}</div>
-            <div className="mt-16 text-center">
-              <p className="text-[10px] uppercase font-bold tracking-widest opacity-60">Total Commits</p>
-              <h2 className={`text-6xl font-black tracking-tighter mt-1 ${dna.typography}`}>{animatedCommits}</h2>
+
+          {/* Top section: Avatar & Name badge */}
+          <div className="relative z-10 w-full flex flex-col items-center mt-10">
+            <div className="w-[42%] aspect-square mb-6 border-[4px] shadow-2xl" style={{ borderColor: dna.accent, borderRadius: '50%' }}>
+              {renderAvatar(false)}
+            </div>
+            <div className={`bg-white/95 text-black px-5 py-2 rounded-full font-black text-md text-center shadow-xl w-[85%] truncate border border-black/10 ${dna.typography}`}>
+              {stats.name || stats.username}
+            </div>
+          </div>
+
+          {/* Middle section: Total Commits */}
+          <div className="relative z-10 text-center my-4">
+            <p className="text-[9px] uppercase font-bold tracking-widest opacity-60">Total Commits</p>
+            <h2 className={`text-6xl font-black tracking-tighter mt-1 ${dna.typography}`}>{animatedCommits.toLocaleString()}</h2>
+          </div>
+
+          {/* Bottom section: 2x2 Minimalist Metrics Grid to fill emptiness */}
+          <div className="relative z-10 w-full grid grid-cols-2 gap-y-5 gap-x-4 pt-6 border-t" style={{ borderColor: `${textMain}20` }}>
+            <div className="text-center">
+              <span className="text-[9px] uppercase tracking-widest opacity-50 block mb-1">Streak</span>
+              <span className={`text-md font-black ${dna.typography}`} style={{ color: dna.accent }}>{animatedStreak} Days</span>
+            </div>
+            <div className="text-center">
+              <span className="text-[9px] uppercase tracking-widest opacity-50 block mb-1">Stars</span>
+              <span className={`text-md font-black ${dna.typography}`} style={{ color: dna.accent }}>★ {animatedStars}</span>
+            </div>
+            <div className="text-center">
+              <span className="text-[9px] uppercase tracking-widest opacity-50 block mb-1">Vector</span>
+              <span className={`text-md font-black truncate max-w-full block ${dna.typography}`} style={{ color: dna.accent }}>{primaryLang}</span>
+            </div>
+            <div className="text-center">
+              <span className="text-[9px] uppercase tracking-widest opacity-50 block mb-1">Pulls</span>
+              <span className={`text-md font-black ${dna.typography}`} style={{ color: dna.accent }}>⇄ {stats.totalPRs || 0}</span>
             </div>
           </div>
         </div>
