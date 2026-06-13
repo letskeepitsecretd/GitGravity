@@ -4,8 +4,8 @@ import path from 'path';
 // Force Next.js to always execute this fresh at runtime
 export const dynamic = 'force-dynamic';
 
-const KV_URL = process.env.KV_REST_API_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+const KV_URL = (process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL)?.replace(/\/$/, '');
+const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 const LOCAL_STORAGE_PATH = path.join(process.cwd(), 'scratch', 'cards_db.json');
 
 // Helper to check if we are in production with valid cloud credentials
