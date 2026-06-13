@@ -42,8 +42,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Invalid payload' }, { status: 400 });
     }
 
-    // 1. Upload to Catbox for persistent cloud storage on Vercel
-    let url = await uploadToCatbox(rawData, username);
+    // 1. Check if URL was already uploaded client-side, otherwise upload to Catbox
+    let url = body.url;
+    if (!url) {
+      url = await uploadToCatbox(rawData, username);
+    }
 
     // 2. Local filesystem write fallback (always run locally, or as backup on serverless)
     try {

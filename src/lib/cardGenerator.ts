@@ -97,13 +97,37 @@ export const captureCardElement = async (
       },
     });
 
-    // 3. Post to backend to save the clean file
+    // 3. Upload to Catbox client-side (extremely reliable, bypasses serverless timeouts)
+    let catboxUrl = '';
+    try {
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const formData = new FormData();
+      formData.append('reqtype', 'fileupload');
+      formData.append('fileToUpload', blob, `gitgravity-${username}.png`);
+
+      const catboxRes = await fetch('https://catbox.moe/user/api.php', {
+        method: 'POST',
+        body: formData,
+      });
+      if (catboxRes.ok) {
+        const text = await catboxRes.text();
+        if (text && text.startsWith('https://')) {
+          catboxUrl = text.trim();
+        }
+      }
+    } catch (e) {
+      console.warn("Client-side Catbox upload failed during card save:", e);
+    }
+
+    // 4. Post to backend to save the clean file
     await fetch('/api/admin/save-card', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         username, 
         image: dataUrl,
+        url: catboxUrl,
         era: metadata?.era,
         pattern: metadata?.pattern,
         accent: metadata?.accent
