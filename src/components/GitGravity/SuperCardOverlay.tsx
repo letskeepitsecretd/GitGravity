@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { generateCardDNA, captureCardElement } from '@/lib/cardGenerator'
+import { generateCardDNA, captureCardElement, dataURLtoBlob } from '@/lib/cardGenerator'
 import GeneratedCard from '@/components/GeneratedCard'
 
 interface GitHubStats {
@@ -202,8 +202,7 @@ export default function SuperCardOverlay({ stats, shareTarget, onClose, triggerS
         }, 500);
 
         if (dataUrl) {
-          const response = await fetch(dataUrl);
-          const blob = await response.blob();
+          const blob = dataURLtoBlob(dataUrl);
           catboxUrl = await uploadToCatbox(blob);
         }
       } catch (e) {

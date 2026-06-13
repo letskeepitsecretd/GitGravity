@@ -56,6 +56,18 @@ export function generateCardDNA(stats: GitHubStats): CardDNA {
   };
 }
 
+export function dataURLtoBlob(dataurl: string): Blob {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)![1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+}
+
 export const captureCardElement = async (
   node: HTMLElement | null, 
   username: string, 
@@ -100,8 +112,7 @@ export const captureCardElement = async (
     // 3. Upload to Catbox client-side (extremely reliable, bypasses serverless timeouts)
     let catboxUrl = '';
     try {
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
+      const blob = dataURLtoBlob(dataUrl);
       const formData = new FormData();
       formData.append('reqtype', 'fileupload');
       formData.append('fileToUpload', blob, `gitgravity-${username}.png`);
