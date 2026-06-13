@@ -17,6 +17,9 @@ async function uploadToCatbox(base64Data: string, username: string): Promise<str
     const res = await fetch('https://catbox.moe/user/api.php', {
       method: 'POST',
       body: formData,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+      }
     });
 
     if (!res.ok) return null;

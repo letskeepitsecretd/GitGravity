@@ -8,7 +8,7 @@ import CommitScrollSlide from "@/components/CommitScrollSlide";
 import AstralConsoleSlide from "@/components/AstralConsoleSlide";
 import { FlickeringGlowGrid } from "@/components/ui/flickering-glow-grid";
 import WrappedDeck from "./WrappedDeck";
-import { generateCardDNA, GitHubStats, captureCardElement } from "@/lib/cardGenerator";
+import { generateCardDNA, GitHubStats, captureCardElement, dataURLtoBlob } from "@/lib/cardGenerator";
 import GeneratedCard from "@/components/GeneratedCard";
 import { toPng } from 'html-to-image';
 
@@ -185,7 +185,31 @@ export default function GitGravityInteractivePage({
         return;
       }
 
-      console.log("Canvas captured successfully. Handoff to backend proxy starting...");
+      console.log("Canvas captured successfully. Uploading to Cloud Storage client-side...");
+
+      // 2.5. Upload to Catbox client-side first (highly reliable, bypasses Vercel network restrictions)
+      let catboxUrl = "";
+      try {
+        const blob = dataURLtoBlob(dataUrl);
+        const formData = new FormData();
+        formData.append('reqtype', 'fileupload');
+        formData.append('fileToUpload', blob, `gitgravity-${username}.png`);
+
+        const catboxRes = await fetch('https://catbox.moe/user/api.php', {
+          method: 'POST',
+          body: formData,
+        });
+        if (catboxRes.ok) {
+          const text = await catboxRes.text();
+          if (text && text.startsWith('https://')) {
+            catboxUrl = text.trim();
+          }
+        }
+      } catch (uploadErr: any) {
+        console.warn("Client-side cloud upload failed, letting backend fallback try:", uploadErr);
+      }
+
+      console.log("Handoff to backend proxy starting...");
 
       // 3. Post to your backend endpoint
       const response = await fetch('/api/admin/save-card', {
@@ -194,7 +218,8 @@ export default function GitGravityInteractivePage({
         body: JSON.stringify({ 
           username: username,
           style: { era: 'modern', pattern: 'grid', accent: 'green' },
-          imageString: dataUrl 
+          imageString: dataUrl,
+          url: catboxUrl
         }),
       });
 
