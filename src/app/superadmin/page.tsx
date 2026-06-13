@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [activePreviewCard, setActivePreviewCard] = useState<any>(null);
 
-  const fetchData = () => fetch('/api/admin/metrics').then(r => r.json()).then(setSys);
+  const fetchData = () => fetch(`/api/admin/metrics?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(setSys);
   useEffect(() => { 
     fetchData(); 
     setRenderId(Math.random().toString(36).substring(7));
