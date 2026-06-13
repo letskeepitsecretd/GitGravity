@@ -167,20 +167,58 @@ export default function GitGravityInteractivePage({
         return;
       }
 
+      setLoading(true);
+      setSubmittedUsername(username);
+      setError(null);
+      setShowWrappedDeck(false);
+      setHasAutoSaved(false);
+
+      // 1.5. Fetch the live user data first
+      console.log("Fetching live GitHub data...");
+      let fetchedData: UserData | null = null;
+      try {
+        const res = await fetch(`/api/wrapped?username=${username}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Invalid username or account not found");
+        }
+        fetchedData = await res.json();
+      } catch (fetchErr: any) {
+        const errMsg = fetchErr.message || "Invalid username or account not found";
+        setError(errMsg);
+        setUserData(null);
+        setLoading(false);
+        setSubmittedUsername(null);
+        alert(`Failed to fetch GitHub stats: ${errMsg}`);
+        return;
+      }
+
+      // Set user data to render the card in the DOM
+      setUserData(fetchedData);
+      
+      // Wait for Next.js to render the card in the DOM (loading screen is shown)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // 2. Your canvas capturing logic (html-to-image / toPng)
       // Wrap it tightly to check if the browser canvas engine is crashing
       let dataUrl;
       try {
-        dataUrl = await toPng(document.getElementById('git-card-element') as HTMLElement, {
+        const cardElement = document.getElementById('git-card-element');
+        if (!cardElement) {
+          throw new Error("Card capture element not found in the DOM.");
+        }
+        dataUrl = await toPng(cardElement, {
           cacheBust: true,
           style: { transform: 'scale(1)' }
         });
       } catch (canvasErr: any) {
+        setLoading(false);
         alert(`frontend canvas capture failed: ${canvasErr.message || canvasErr}`);
         return;
       }
 
       if (!dataUrl) {
+        setLoading(false);
         alert("Generated data URL is completely empty. Canvas extraction failed.");
         return;
       }
@@ -217,7 +255,7 @@ export default function GitGravityInteractivePage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           username: username,
-          style: { era: 'modern', pattern: 'grid', accent: 'green' },
+          style: { era: fetchedData?.gravityTier ? 'modern' : 'classic', pattern: 'grid', accent: 'green' },
           imageString: dataUrl,
           url: catboxUrl
         }),
@@ -226,14 +264,22 @@ export default function GitGravityInteractivePage({
       // 4. Handle HTTP Status codes explicitly
       if (!response.ok) {
         const errText = await response.text();
+        setLoading(false);
         alert(`Server rejected request! Status: ${response.status}. Details: ${errText}`);
         return;
       }
 
       const result = await response.json();
+      
+      // Let the loader finish animating for smooth transition
+      setTimeout(() => {
+        setLoading(false);
+      }, 2000);
+
       alert(`Success! Card saved dynamically. Cloud URL: ${result.url}`);
       
     } catch (globalError: any) {
+      setLoading(false);
       // This will catch any silent CORS blocks, network dropouts, or Vercel timeouts
       alert(`CRITICAL PIPELINE CRASH: ${globalError.message || globalError}`);
     }
@@ -502,32 +548,19 @@ export default function GitGravityInteractivePage({
         )}
       </AnimatePresence>
 
-      <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -100, opacity: 0.99, pointerEvents: 'none' }}>
-        <div ref={captureBgRef} id="git-card-element" style={{ width: '380px' }}>
-          <GeneratedCard
-            animatedCommits={userData?.totalCommits || 0}
-            animatedStars={userData?.totalStars || 0}
-            animatedStreak={userData?.longestStreak || 0}
-            dna={cardDNA || {
-              era: 'ERA_CLASSIC',
-              pattern: 'SOLID',
-              accent: '#1ed760',
-              typography: 'font-mono',
-              isLightMode: false,
-              year: new Date().getFullYear()
-            }}
-            stats={stats || {
-              username: username || "anonymous",
-              totalCommits: 0,
-              longestStreak: 0,
-              totalStars: 0,
-              totalPRs: 0,
-              topLanguages: [{ name: 'TypeScript', percent: 100 }],
-              avatarUrl: `https://avatars.githubusercontent.com/u/9919?v=4`
-            }}
-          />
+      {userData && stats && cardDNA && (
+        <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -100, opacity: 0.99, pointerEvents: 'none' }}>
+          <div ref={captureBgRef} id="git-card-element" style={{ width: '380px' }}>
+            <GeneratedCard
+              animatedCommits={userData.totalCommits || 0}
+              animatedStars={userData.totalStars || 0}
+              animatedStreak={userData.longestStreak || 0}
+              dna={cardDNA}
+              stats={stats}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

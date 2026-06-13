@@ -8,23 +8,40 @@ async function uploadToCatbox(base64Data: string, username: string): Promise<str
     const base64Image = base64Data.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Buffer.from(base64Image, 'base64');
     
-    const formData = new FormData();
-    formData.append('reqtype', 'fileupload');
+    const boundary = `----WebKitFormBoundary${Math.random().toString(36).substring(2)}`;
     
-    const blob = new Blob([buffer], { type: 'image/png' });
-    formData.append('fileToUpload', blob, `gitgravity-${username}.png`);
+    const parts = [
+      `--${boundary}\r\nContent-Disposition: form-data; name="reqtype"\r\n\r\nfileupload\r\n`,
+      `--${boundary}\r\nContent-Disposition: form-data; name="fileToUpload"; filename="gitgravity-${username}.png"\r\nContent-Type: image/png\r\n\r\n`
+    ];
+    
+    const part1Buffer = Buffer.from(parts[0], 'utf-8');
+    const part2Buffer = Buffer.from(parts[1], 'utf-8');
+    const endBuffer = Buffer.from(`\r\n--${boundary}--\r\n`, 'utf-8');
+    
+    const bodyBuffer = Buffer.concat([
+      part1Buffer,
+      part2Buffer,
+      buffer,
+      endBuffer
+    ]);
 
     const res = await fetch('https://catbox.moe/user/api.php', {
       method: 'POST',
-      body: formData,
       headers: {
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-      }
+      },
+      body: bodyBuffer
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn("Catbox server response status:", res.status);
+      return null;
+    }
     const text = await res.text();
     if (text && text.startsWith('https://')) return text.trim();
+    console.warn("Catbox response text was invalid:", text);
     return null;
   } catch (e) {
     console.warn("Backend Catbox upload failed:", e);
