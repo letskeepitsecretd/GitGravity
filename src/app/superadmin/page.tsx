@@ -9,8 +9,12 @@ export default function Dashboard() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState('');
 
+  const [renderId, setRenderId] = useState('');
   const fetchData = () => fetch('/api/admin/metrics').then(r => r.json()).then(setSys);
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    fetchData(); 
+    setRenderId(Math.random().toString(36).substring(7));
+  }, []);
 
   const handleExport = async () => {
     if (!sys?.cards || isExporting) return;
@@ -174,7 +178,7 @@ export default function Dashboard() {
                   {/* Synced high-fidelity visual preview */}
                   <div className="relative w-full aspect-[1/1.8] bg-zinc-950 overflow-hidden border border-zinc-900 rounded-lg group-hover:border-green-500/60 transition-all flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(16,185,129,0.08)]">
                     <img 
-                      src={`/api/admin/card-image?username=${c.username}&t=${c.timestamp}`} 
+                      src={`/api/admin/card-image?username=${c.username}&t=${c.timestamp}&r=${renderId}`} 
                       alt={`${c.username}'s Card`} 
                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
                       loading="lazy"
@@ -190,7 +194,7 @@ export default function Dashboard() {
                     {/* Floating hover download overlay */}
                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                       <a 
-                        href={`/api/admin/card-image?username=${c.username}&t=${c.timestamp}`} 
+                        href={`/api/admin/card-image?username=${c.username}&t=${c.timestamp}&r=${renderId}`} 
                         download={`${c.username}_gitgravity.png`}
                         className="p-1.5 bg-black/90 border border-zinc-800 hover:border-green-500 hover:text-green-500 text-zinc-400 rounded-md transition-colors block cursor-pointer"
                         title="Download Graphic"
