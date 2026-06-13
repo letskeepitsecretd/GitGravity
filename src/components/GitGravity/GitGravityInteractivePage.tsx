@@ -189,7 +189,7 @@ export default function GitGravityInteractivePage({
         setUserData(null);
         setLoading(false);
         setSubmittedUsername(null);
-        alert(`Failed to fetch GitHub stats: ${errMsg}`);
+        console.error(`Failed to fetch GitHub stats: ${errMsg}`);
         return;
       }
 
@@ -212,14 +212,19 @@ export default function GitGravityInteractivePage({
           style: { transform: 'scale(1)' }
         });
       } catch (canvasErr: any) {
-        setLoading(false);
-        alert(`frontend canvas capture failed: ${canvasErr.message || canvasErr}`);
+        console.error(`frontend canvas capture failed: ${canvasErr.message || canvasErr}`);
+        // Let the user continue to the dashboard even if canvas capture fails silently
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
         return;
       }
 
       if (!dataUrl) {
-        setLoading(false);
-        alert("Generated data URL is completely empty. Canvas extraction failed.");
+        console.error("Generated data URL is completely empty. Canvas extraction failed.");
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
         return;
       }
 
@@ -264,24 +269,27 @@ export default function GitGravityInteractivePage({
       // 4. Handle HTTP Status codes explicitly
       if (!response.ok) {
         const errText = await response.text();
-        setLoading(false);
-        alert(`Server rejected request! Status: ${response.status}. Details: ${errText}`);
+        console.warn(`Server rejected request! Status: ${response.status}. Details: ${errText}`);
+        // Let the user continue to the dashboard anyway
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
         return;
       }
 
       const result = await response.json();
+      console.log(`Success! Card saved dynamically. Cloud URL: ${result.url}`);
       
       // Let the loader finish animating for smooth transition
       setTimeout(() => {
         setLoading(false);
       }, 2000);
-
-      alert(`Success! Card saved dynamically. Cloud URL: ${result.url}`);
       
     } catch (globalError: any) {
-      setLoading(false);
-      // This will catch any silent CORS blocks, network dropouts, or Vercel timeouts
-      alert(`CRITICAL PIPELINE CRASH: ${globalError.message || globalError}`);
+      console.error(`CRITICAL PIPELINE CRASH: ${globalError.message || globalError}`);
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     }
   };
 
