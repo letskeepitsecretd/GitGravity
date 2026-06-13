@@ -52,10 +52,27 @@ export async function getCardsFromDb(): Promise<CardRecord[]> {
     if (fs.existsSync(MANIFEST_PATH)) {
       const manifestData = fs.readFileSync(MANIFEST_PATH, 'utf8');
       const manifest = JSON.parse(manifestData);
-      return manifest.map((item: any) => ({
-        ...item,
-        url: item.url || `/cards/${item.username}.png`
-      }));
+      return manifest.map((item: any) => {
+        let isPlaceholder = item.isPlaceholder;
+        if (isPlaceholder === undefined) {
+          try {
+            const filepath = path.join(LOCAL_DIR, `${item.username}.png`);
+            if (fs.existsSync(filepath)) {
+              const stats = fs.statSync(filepath);
+              isPlaceholder = stats.size < 1000; // Under 1KB is a placeholder
+            } else {
+              isPlaceholder = true; // No file exists
+            }
+          } catch (e) {
+            isPlaceholder = false;
+          }
+        }
+        return {
+          ...item,
+          url: item.url || `/cards/${item.username}.png`,
+          isPlaceholder
+        };
+      });
     }
   } catch (e) {
     console.error('Failed to read local manifest:', e);
