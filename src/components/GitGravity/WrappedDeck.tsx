@@ -295,6 +295,7 @@ export default function WrappedDeck({ userData, onBack }: WrappedDeckProps) {
 
   const stats = useMemo<GitHubStats>(() => ({
     username: userData.username || "anonymous",
+    name: userData.name || userData.username || "Anonymous Developer",
     totalCommits: userData.totalCommits || 0,
     longestStreak: userData.longestStreak || 0,
     totalStars: userData.totalStars || 0,

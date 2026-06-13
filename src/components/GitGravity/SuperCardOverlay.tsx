@@ -2,18 +2,9 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { generateCardDNA, captureCardElement, dataURLtoBlob } from '@/lib/cardGenerator'
+import { generateCardDNA, captureCardElement, dataURLtoBlob, GitHubStats } from '@/lib/cardGenerator'
 import GeneratedCard from '@/components/GeneratedCard'
 
-interface GitHubStats {
-  username: string;
-  totalCommits: number;
-  longestStreak: number;
-  totalStars: number;
-  totalPRs: number;
-  topLanguages: Array<{ name: string; percent: number }>;
-  avatarUrl?: string;
-}
 
 interface SuperCardOverlayProps {
   stats: GitHubStats

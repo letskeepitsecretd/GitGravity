@@ -45,14 +45,26 @@ export default function GeneratedCard({ dna, stats, animatedCommits, animatedStr
       return <img src={avatarSrc} crossOrigin="anonymous" onError={() => setImgFailed(true)} className={`w-full h-full object-cover ${shapeClass}`} alt="avatar" />;
     }
     return (
-      <div className={`w-full h-full flex items-center justify-center font-black text-5xl bg-zinc-800 text-white ${shapeClass}`}>
-        {stats.username.substring(0, 2).toUpperCase()}
+      <div className={`w-full h-full flex items-center justify-center bg-zinc-900 text-white ${shapeClass} p-4`}>
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-[60%] h-[60%] text-white">
+          <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.028-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.646.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.137 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+        </svg>
       </div>
     );
   };
 
   return (
     <div className="relative w-full aspect-[1/1.8] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans tracking-tight border border-zinc-800/50" style={{ backgroundColor: bgMain, color: textMain }}>
+      
+      {/* 0. Top Header Overlay for Real Name and Username */}
+      <div className="absolute top-4 left-6 right-6 flex justify-between items-center z-40 mix-blend-difference text-white pointer-events-none">
+        <span className="text-[11px] font-black uppercase tracking-widest truncate max-w-[65%]">
+          {stats.name || stats.username}
+        </span>
+        <span className="text-[9px] font-mono opacity-80 tracking-wider">
+          @{stats.username}
+        </span>
+      </div>
       
       {/* 1. ERA_SPLIT (2025 Brutalist B&W) */}
       {dna.era === 'ERA_SPLIT' && (
@@ -123,7 +135,7 @@ export default function GeneratedCard({ dna, stats, animatedCommits, animatedStr
           </div>
           <div className="relative z-10 w-full flex flex-col items-center mt-12">
             <div className="w-[45%] mb-8 border-[4px] shadow-2xl" style={{ borderColor: dna.accent, borderRadius: '50%' }}>{renderAvatar(false)}</div>
-            <div className={`bg-white/90 text-black px-6 py-2 rounded-full font-black text-xl text-center shadow-xl w-[90%] truncate border border-black/10 ${dna.typography}`}>@{stats.username}</div>
+            <div className={`bg-white/90 text-black px-6 py-2 rounded-full font-black text-xl text-center shadow-xl w-[90%] truncate border border-black/10 ${dna.typography}`}>{stats.name || `@${stats.username}`}</div>
             <div className="mt-16 text-center">
               <p className="text-[10px] uppercase font-bold tracking-widest opacity-60">Total Commits</p>
               <h2 className={`text-6xl font-black tracking-tighter mt-1 ${dna.typography}`}>{animatedCommits}</h2>
@@ -222,7 +234,7 @@ export default function GeneratedCard({ dna, stats, animatedCommits, animatedStr
             <p className="text-sm font-bold opacity-80 mt-4">That's more than 99.5% of other <br/> {primaryLang} developers.</p>
           </div>
           <div className="absolute bottom-6 w-full flex justify-between px-8 z-20">
-             <span className="text-[10px] uppercase font-bold">@{stats.username}</span>
+             <span className="text-[10px] uppercase font-bold truncate max-w-[60%]">{stats.name || stats.username}</span>
              <span className="text-[10px] uppercase font-bold flex items-center gap-1">★ {animatedStars} STARS</span>
           </div>
         </div>
