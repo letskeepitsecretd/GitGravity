@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Activity, HardDrive, Database, Download, RefreshCw, LayoutGrid, Search, Trash2 } from 'lucide-react';
+import { Activity, HardDrive, Database, Download, RefreshCw, LayoutGrid, Search, Trash2, X } from 'lucide-react';
 import JSZip from 'jszip';
 
 export default function Dashboard() {
@@ -11,6 +11,7 @@ export default function Dashboard() {
 
   const [renderId, setRenderId] = useState('');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [activePreviewCard, setActivePreviewCard] = useState<any>(null);
 
   const fetchData = () => fetch('/api/admin/metrics').then(r => r.json()).then(setSys);
   useEffect(() => { 
@@ -204,7 +205,10 @@ export default function Dashboard() {
               filteredCards.map((c: any) => (
                 <div key={c.id} className="group flex flex-col gap-2.5">
                   {/* Synced high-fidelity visual preview */}
-                  <div className="relative w-full aspect-[1/1.8] bg-zinc-950 overflow-hidden border border-zinc-900 rounded-lg group-hover:border-green-500/60 transition-all flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(16,185,129,0.08)]">
+                  <div 
+                    onClick={() => setActivePreviewCard(c)}
+                    className="relative w-full aspect-[1/1.8] bg-zinc-950 overflow-hidden border border-zinc-900 rounded-lg group-hover:border-green-500/60 transition-all flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(16,185,129,0.08)] cursor-pointer"
+                  >
                     <img 
                       src={`/api/admin/card-image?username=${c.username}&t=${c.timestamp}&r=${renderId}`} 
                       alt={`${c.username}'s Card`} 
@@ -262,6 +266,65 @@ export default function Dashboard() {
             )}
           </div>
         </section>
+      {activePreviewCard && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 cursor-pointer animate-in fade-in duration-200"
+          onClick={() => setActivePreviewCard(null)}
+        >
+          <div 
+            className="relative w-full max-w-[340px] bg-zinc-950 border border-zinc-900 p-6 rounded-2xl flex flex-col items-center gap-6 shadow-2xl cursor-default animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button 
+              onClick={() => setActivePreviewCard(null)}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="text-xs tracking-widest text-green-500 font-bold uppercase text-center">
+              Artifact Inspection // @{activePreviewCard.username}
+            </h3>
+
+            {/* High fidelity image preview */}
+            <div className="relative w-full aspect-[1/1.8] bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg">
+              <img 
+                src={`/api/admin/card-image?username=${activePreviewCard.username}&t=${activePreviewCard.timestamp}&r=${renderId}`} 
+                alt={`${activePreviewCard.username}'s Card`} 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-4 w-full">
+              <a 
+                href={`/api/admin/card-image?username=${activePreviewCard.username}&t=${activePreviewCard.timestamp}&r=${renderId}`} 
+                download={`${activePreviewCard.username}_gitgravity.png`}
+                className="flex-1 py-3 bg-zinc-900 hover:bg-green-950/20 border border-zinc-850 hover:border-green-500/50 hover:text-green-500 text-zinc-300 text-xs font-bold text-center rounded-xl transition-all flex justify-center items-center gap-2 cursor-pointer"
+              >
+                <Download size={14} /> Download
+              </a>
+              <button
+                onClick={() => {
+                  handleDeleteCard(activePreviewCard.username);
+                  setActivePreviewCard(null);
+                }}
+                disabled={isDeleting !== null}
+                className="flex-1 py-3 bg-zinc-900 hover:bg-red-950/20 border border-zinc-850 hover:border-red-500/50 hover:text-red-500 text-zinc-300 text-xs font-bold rounded-xl transition-all flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting === activePreviewCard.username ? (
+                  <div className="w-3.5 h-3.5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Trash2 size={14} /> Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
