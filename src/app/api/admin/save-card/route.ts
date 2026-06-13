@@ -86,6 +86,12 @@ export async function POST(req: Request) {
       console.warn("Local filesystem write skipped/failed (normal on Vercel serverless):", fsErr);
     }
 
+    // 2.5. Fallback: If both Catbox upload and local filesystem write failed, store the raw base64 data URL directly
+    if (!url && rawData && rawData.startsWith('data:')) {
+      console.log("Saving raw base64 data URL directly to database fallback...");
+      url = rawData;
+    }
+
     if (!url) {
       return NextResponse.json({ success: false, message: 'Could not store image' }, { status: 500 });
     }

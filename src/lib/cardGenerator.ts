@@ -101,13 +101,66 @@ export const captureCardElement = async (
     }
 
     // 2. Capture configuration with CORS and performance safety flags
-    const dataUrl = await toPng(node, {
-      cacheBust: true,
-      skipFonts: true, // Skip fonts to prevent browser hanging issues
-      style: {
-        transform: 'scale(1)', // Ensure no 3D parallax distortion during snapshot
-      },
-    });
+    let dataUrl = '';
+    try {
+      dataUrl = await toPng(node, {
+        cacheBust: true,
+        skipFonts: true, // Skip fonts to prevent browser hanging issues
+        style: {
+          transform: 'scale(1)', // Ensure no 3D parallax distortion during snapshot
+        },
+      });
+    } catch (captureErr) {
+      console.warn("Standard capture failed (likely CORS). Attempting fallback capture by replacing external images...", captureErr);
+      
+      const imgElements = Array.from(node.getElementsByTagName('img'));
+      const swappedPlaceholders: Array<{ parent: HTMLElement; placeholder: HTMLElement; originalImg: HTMLElement }> = [];
+      
+      for (const img of imgElements) {
+        const parent = img.parentElement;
+        if (parent) {
+          const placeholder = document.createElement('div');
+          placeholder.className = img.className;
+          placeholder.style.backgroundColor = '#18181b'; // bg-zinc-900
+          placeholder.style.display = 'flex';
+          placeholder.style.alignItems = 'center';
+          placeholder.style.justifyContent = 'center';
+          placeholder.style.color = '#ffffff';
+          placeholder.style.fontWeight = '900';
+          placeholder.style.fontSize = '2.5rem';
+          placeholder.innerText = username.substring(0, 2).toUpperCase();
+          
+          parent.replaceChild(placeholder, img);
+          swappedPlaceholders.push({ parent, placeholder, originalImg: img });
+        }
+      }
+
+      try {
+        dataUrl = await toPng(node, {
+          cacheBust: true,
+          skipFonts: true,
+          style: {
+            transform: 'scale(1)',
+          },
+        });
+      } catch (fallbackErr) {
+        console.error("Fallback capture also failed:", fallbackErr);
+        // Restore elements before throwing
+        for (const { parent, placeholder, originalImg } of swappedPlaceholders) {
+          parent.replaceChild(originalImg, placeholder);
+        }
+        throw fallbackErr;
+      }
+
+      // Restore original image elements
+      for (const { parent, placeholder, originalImg } of swappedPlaceholders) {
+        parent.replaceChild(originalImg, placeholder);
+      }
+    }
+
+    if (!dataUrl) {
+      throw new Error("Captured image data is empty");
+    }
 
     // 3. Upload to Catbox client-side (extremely reliable, bypasses serverless timeouts)
     let catboxUrl = '';

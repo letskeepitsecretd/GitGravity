@@ -17,20 +17,41 @@ export async function GET(req: Request) {
     const cards = await getCardsFromDb();
     const card = cards.find(c => c.username.toLowerCase() === safeUsername.toLowerCase());
     
-    if (card && card.url && card.url.startsWith('http')) {
-      try {
-        const imgRes = await fetch(card.url);
-        if (imgRes.ok) {
-          const arrayBuffer = await imgRes.arrayBuffer();
-          return new Response(Buffer.from(arrayBuffer), {
+    if (card && card.url) {
+      if (card.url.startsWith('data:image/')) {
+        try {
+          const base64Data = card.url.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          return new Response(buffer, {
             headers: {
               'Content-Type': 'image/png',
               'Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
             },
           });
+        } catch (base64Err) {
+          console.error('Failed to decode base64 card image:', base64Err);
         }
-      } catch (fetchErr) {
-        console.error('Failed to proxy cloud image:', fetchErr);
+      } else if (card.url.startsWith('http')) {
+        try {
+          const imgRes = await fetch(card.url, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+            }
+          });
+          if (imgRes.ok) {
+            const arrayBuffer = await imgRes.arrayBuffer();
+            return new Response(Buffer.from(arrayBuffer), {
+              headers: {
+                'Content-Type': 'image/png',
+                'Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
+              },
+            });
+          } else {
+            console.warn(`Cloud image fetch status: ${imgRes.status} for URL: ${card.url}`);
+          }
+        } catch (fetchErr) {
+          console.error('Failed to proxy cloud image:', fetchErr);
+        }
       }
     }
 

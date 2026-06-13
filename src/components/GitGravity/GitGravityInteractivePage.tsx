@@ -199,91 +199,27 @@ export default function GitGravityInteractivePage({
       // Wait for Next.js to render the card in the DOM (loading screen is shown)
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // 2. Your canvas capturing logic (html-to-image / toPng)
-      // Wrap it tightly to check if the browser canvas engine is crashing
-      let dataUrl;
+      // 2. Capture and save the card dynamically
       try {
         const cardElement = document.getElementById('git-card-element');
-        if (!cardElement) {
-          throw new Error("Card capture element not found in the DOM.");
+        if (cardElement) {
+          const era = cardDNA?.era || (fetchedData?.gravityTier ? 'modern' : 'classic');
+          const pattern = cardDNA?.pattern || 'grid';
+          const accent = cardDNA?.accent || 'green';
+          
+          await captureCardElement(cardElement, username, { era, pattern, accent }, 500);
+          setHasAutoSaved(true);
+        } else {
+          console.warn("Card capture element not found in DOM during click handler.");
         }
-        dataUrl = await toPng(cardElement, {
-          cacheBust: true,
-          style: { transform: 'scale(1)' }
-        });
-      } catch (canvasErr: any) {
-        console.error(`frontend canvas capture failed: ${canvasErr.message || canvasErr}`);
-        // Let the user continue to the dashboard even if canvas capture fails silently
-        setTimeout(() => {
-          setLoading(false);
-        }, 1000);
-        return;
+      } catch (captureErr) {
+        console.error("Canvas capture and save flow failed in click handler:", captureErr);
       }
-
-      if (!dataUrl) {
-        console.error("Generated data URL is completely empty. Canvas extraction failed.");
-        setTimeout(() => {
-          setLoading(false);
-        }, 1000);
-        return;
-      }
-
-      console.log("Canvas captured successfully. Uploading to Cloud Storage client-side...");
-
-      // 2.5. Upload to Catbox client-side first (highly reliable, bypasses Vercel network restrictions)
-      let catboxUrl = "";
-      try {
-        const blob = dataURLtoBlob(dataUrl);
-        const formData = new FormData();
-        formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', blob, `gitgravity-${username}.png`);
-
-        const catboxRes = await fetch('https://catbox.moe/user/api.php', {
-          method: 'POST',
-          body: formData,
-        });
-        if (catboxRes.ok) {
-          const text = await catboxRes.text();
-          if (text && text.startsWith('https://')) {
-            catboxUrl = text.trim();
-          }
-        }
-      } catch (uploadErr: any) {
-        console.warn("Client-side cloud upload failed, letting backend fallback try:", uploadErr);
-      }
-
-      console.log("Handoff to backend proxy starting...");
-
-      // 3. Post to your backend endpoint
-      const response = await fetch('/api/admin/save-card', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: username,
-          style: { era: fetchedData?.gravityTier ? 'modern' : 'classic', pattern: 'grid', accent: 'green' },
-          imageString: dataUrl,
-          url: catboxUrl
-        }),
-      });
-
-      // 4. Handle HTTP Status codes explicitly
-      if (!response.ok) {
-        const errText = await response.text();
-        console.warn(`Server rejected request! Status: ${response.status}. Details: ${errText}`);
-        // Let the user continue to the dashboard anyway
-        setTimeout(() => {
-          setLoading(false);
-        }, 1000);
-        return;
-      }
-
-      const result = await response.json();
-      console.log(`Success! Card saved dynamically. Cloud URL: ${result.url}`);
       
       // Let the loader finish animating for smooth transition
       setTimeout(() => {
         setLoading(false);
-      }, 2000);
+      }, 1000);
       
     } catch (globalError: any) {
       console.error(`CRITICAL PIPELINE CRASH: ${globalError.message || globalError}`);
