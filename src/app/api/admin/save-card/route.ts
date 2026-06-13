@@ -33,10 +33,11 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const username = body.username;
-    const rawData = body.base64Data || body.image;
-    const era = body.era;
-    const pattern = body.pattern;
-    const accent = body.accent;
+    const rawData = body.imageString || body.base64Data || body.image;
+    const styleObj = body.style || {};
+    const era = body.era || styleObj.era;
+    const pattern = body.pattern || styleObj.pattern;
+    const accent = body.accent || styleObj.accent;
 
     if (!username || !rawData) {
       return NextResponse.json({ success: false, message: 'Invalid payload' }, { status: 400 });
