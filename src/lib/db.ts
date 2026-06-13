@@ -15,19 +15,22 @@ const LOCAL_DIR = path.join(process.cwd(), 'public/cards');
 const MANIFEST_PATH = path.join(LOCAL_DIR, 'manifest.json');
 const KV_KEY = 'gitgravity:cards';
 
+const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
 // Helper to determine if Vercel KV is configured
 function isKvConfigured(): boolean {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+  return !!(KV_URL && KV_TOKEN);
 }
 
 // Fetch all cards from KV or Local Filesystem
 export async function getCardsFromDb(): Promise<CardRecord[]> {
   if (isKvConfigured()) {
     try {
-      const response = await fetch(process.env.KV_REST_API_URL!, {
+      const response = await fetch(KV_URL!, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.KV_REST_API_TOKEN!}`,
+          Authorization: `Bearer ${KV_TOKEN!}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(['GET', KV_KEY]),
@@ -118,10 +121,10 @@ export async function saveCardToDb(card: Omit<CardRecord, 'timestamp'>): Promise
       filtered.unshift(record);
 
       // 4. Save back to KV
-      const response = await fetch(process.env.KV_REST_API_URL!, {
+      const response = await fetch(KV_URL!, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.KV_REST_API_TOKEN!}`,
+          Authorization: `Bearer ${KV_TOKEN!}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(['SET', KV_KEY, JSON.stringify(filtered)]),
