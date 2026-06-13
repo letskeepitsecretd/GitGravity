@@ -69,12 +69,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Could not store image' }, { status: 500 });
     }
 
-    // 3. Save persistently to Vercel KV (falls back to local manifest.json automatically)
+    // 3. Save persistently to Vercel KV
     await saveCardToDb({
       username,
-      era: era || 'ERA_CLASSIC',
-      pattern: pattern || 'SOLID',
-      accent: accent || '#1ed760',
+      style: {
+        era: era || 'ERA_CLASSIC',
+        pattern: pattern || 'SOLID',
+        accent: accent || '#1ed760',
+      },
       url
     });
 
