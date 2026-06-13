@@ -18,7 +18,8 @@ export async function GET() {
       cards: cards.map(card => ({
         id: card.timestamp ? `node-${card.timestamp}` : 'legacy-node',
         username: card.username || 'unknown_vector',
-        url: card.url || ''
+        url: card.url || '',
+        timestamp: card.timestamp || 0
       }))
     });
     

@@ -174,7 +174,7 @@ export default function Dashboard() {
                   {/* Synced high-fidelity visual preview */}
                   <div className="relative w-full aspect-[1/1.8] bg-zinc-950 overflow-hidden border border-zinc-900 rounded-lg group-hover:border-green-500/60 transition-all flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(16,185,129,0.08)]">
                     <img 
-                      src={`/api/admin/card-image?username=${c.username}&t=${sys.connections}`} 
+                      src={`/api/admin/card-image?username=${c.username}&t=${c.timestamp}`} 
                       alt={`${c.username}'s Card`} 
                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
                       loading="lazy"
@@ -186,11 +186,11 @@ export default function Dashboard() {
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                       <span className="text-[7px] text-green-400 font-mono tracking-widest uppercase">SYNCED</span>
                     </div>
-
+ 
                     {/* Floating hover download overlay */}
                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                       <a 
-                        href={`/api/admin/card-image?username=${c.username}`} 
+                        href={`/api/admin/card-image?username=${c.username}&t=${c.timestamp}`} 
                         download={`${c.username}_gitgravity.png`}
                         className="p-1.5 bg-black/90 border border-zinc-800 hover:border-green-500 hover:text-green-500 text-zinc-400 rounded-md transition-colors block cursor-pointer"
                         title="Download Graphic"
